@@ -1,5 +1,3 @@
-# PotaFlow Roadmap (4–6 Weeks)
-
 ## Week 1 – Skeleton & Foundations
 - Create GitHub repo and add scaffolding
 - Add README, .gitignore, Makefile
