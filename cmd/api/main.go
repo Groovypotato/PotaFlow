@@ -58,6 +58,8 @@ func main() {
 		os.Exit(1)
 	}
 
+
+	
 	defer DB.Close(context.Background())
 	cfg := Config{
 		DBURL:     DBURL,
