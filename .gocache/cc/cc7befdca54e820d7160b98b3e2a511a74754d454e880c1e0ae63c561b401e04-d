@@ -1,5 +1,0 @@
-./auth.go
-./health.go
-./router.go
-./auth_test.go
-./health_test.go

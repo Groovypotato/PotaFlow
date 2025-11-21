@@ -1,7 +1,0 @@
-./auth.go
-./health.go
-./me.go
-./middleware.go
-./router.go
-./auth_test.go
-./health_test.go
