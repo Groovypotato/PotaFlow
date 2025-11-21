@@ -1,0 +1,3 @@
+./auth.go
+./health.go
+./router.go

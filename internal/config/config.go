@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -16,6 +17,8 @@ type Config struct {
 	DBTESTURL string
 	DBDSN     string
 	DEBUGMODE bool
+	JWTSecret string
+	JWTExpiry time.Duration
 }
 
 // Load reads environment variables (optionally from .env) and returns a validated Config.
@@ -39,6 +42,19 @@ func Load() (Config, error) {
 	}
 
 	debugMode := getEnvAsBool("DEBUG_MODE", false)
+	jwtSecret, err := requireEnv("JWT_SECRET")
+	if err != nil {
+		return Config{}, err
+	}
+
+	jwtExpiry := time.Minute * 60 // default 1h
+	if v := os.Getenv("JWT_EXP_MINUTES"); v != "" {
+		mins, err := strconv.Atoi(v)
+		if err != nil {
+			return Config{}, fmt.Errorf("invalid JWT_EXP_MINUTES: %w", err)
+		}
+		jwtExpiry = time.Duration(mins) * time.Minute
+	}
 
 	var (
 		dbURL     string
@@ -69,6 +85,8 @@ func Load() (Config, error) {
 		DBTESTURL: dbTestURL,
 		DBDSN:     dbDSN,
 		DEBUGMODE: debugMode,
+		JWTSecret: jwtSecret,
+		JWTExpiry: jwtExpiry,
 	}, nil
 }
 
