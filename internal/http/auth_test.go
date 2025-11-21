@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	nethttp "net/http"
 	"net/http/httptest"
 	"testing"
@@ -157,5 +158,31 @@ func TestRegisterHandler_MissingFields(t *testing.T) {
 
 	if rr.Code != nethttp.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", nethttp.StatusBadRequest, rr.Code)
+	}
+}
+
+func TestRegisterHandler_InternalError(t *testing.T) {
+	body := `{"email":"test@example.com","password":"secret"}`
+	req := httptest.NewRequest(nethttp.MethodPost, "/auth/register", bytes.NewBufferString(body))
+	rr := httptest.NewRecorder()
+
+	handler := RegisterHandler(fakeAuthService{err: errors.New("boom")})
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != nethttp.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", nethttp.StatusInternalServerError, rr.Code)
+	}
+}
+
+func TestLoginHandler_InternalError(t *testing.T) {
+	body := `{"email":"test@example.com","password":"secret"}`
+	req := httptest.NewRequest(nethttp.MethodPost, "/auth/login", bytes.NewBufferString(body))
+	rr := httptest.NewRecorder()
+
+	handler := LoginHandler(fakeAuthService{err: errors.New("boom")})
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != nethttp.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", nethttp.StatusInternalServerError, rr.Code)
 	}
 }

@@ -30,6 +30,9 @@ func (f fakeStore) CreateUser(ctx context.Context, email, passwordHash string) (
 }
 
 func (f fakeStore) GetUserByEmail(ctx context.Context, email string) (UserWithHash, error) {
+	if f.err != nil {
+		return UserWithHash{}, f.err
+	}
 	return UserWithHash{}, ErrNotFound
 }
 
@@ -55,5 +58,31 @@ func TestServiceRegister_EmailExists(t *testing.T) {
 	_, err := svc.Register(context.Background(), "dup@example.com", "password123")
 	if !errors.Is(err, ErrEmailExists) {
 		t.Fatalf("expected ErrEmailExists, got %v", err)
+	}
+}
+
+func TestServiceRegister_StoreError(t *testing.T) {
+	wantErr := errors.New("store failure")
+	svc := NewService(fakeStore{err: wantErr}, DefaultParams(), []byte("secret"), time.Hour)
+
+	if _, err := svc.Register(context.Background(), "dup@example.com", "password123"); !errors.Is(err, wantErr) {
+		t.Fatalf("expected store error, got %v", err)
+	}
+}
+
+func TestServiceLogin_NotFound(t *testing.T) {
+	svc := NewService(fakeStore{}, DefaultParams(), []byte("secret"), time.Hour)
+
+	if _, _, err := svc.Login(context.Background(), "missing@example.com", "pw"); !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("expected ErrInvalidCredentials for missing user, got %v", err)
+	}
+}
+
+func TestServiceLogin_StoreError(t *testing.T) {
+	store := fakeStore{err: errors.New("store failure")}
+	svc := NewService(store, DefaultParams(), []byte("secret"), time.Hour)
+
+	if _, _, err := svc.Login(context.Background(), "test@example.com", "pw"); !errors.Is(err, store.err) {
+		t.Fatalf("expected store error, got %v", err)
 	}
 }

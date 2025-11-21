@@ -67,3 +67,10 @@ func TestParamsFromEnvOverrides(t *testing.T) {
 		t.Fatalf("unexpected params from env: %+v", p)
 	}
 }
+
+func TestParamsFromEnv_Invalid(t *testing.T) {
+	t.Setenv("ARGON_MEMORY", "not-a-number")
+	if _, err := ParamsFromEnv(); err == nil {
+		t.Fatalf("expected error for invalid override")
+	}
+}

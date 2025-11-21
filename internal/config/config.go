@@ -3,11 +3,11 @@ package config
 import (
 	"fmt"
 	"log"
-	"os"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 // Config holds runtime configuration derived from environment variables.
@@ -28,33 +28,33 @@ func Load() (Config, error) {
 		log.Println("No .env file found (or couldn't load); continuing...")
 	}
 
+	v := viper.New()
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.SetDefault("JWT_EXP_MINUTES", 60)
+
 	requireEnv := func(key string) (string, error) {
-		val := os.Getenv(key)
+		val := v.GetString(key)
 		if val == "" {
 			return "", fmt.Errorf("missing required environment variable %s", key)
 		}
 		return val, nil
 	}
 
-	appEnv, err := requireEnv("APP_ENV")
+	appEnvRaw, err := requireEnv("APP_ENV")
 	if err != nil {
 		return Config{}, err
 	}
+	appEnv := strings.ToUpper(appEnvRaw)
 
-	debugMode := getEnvAsBool("DEBUG_MODE", false)
+	debugMode := v.GetBool("DEBUG_MODE")
 	jwtSecret, err := requireEnv("JWT_SECRET")
 	if err != nil {
 		return Config{}, err
 	}
 
-	jwtExpiry := time.Minute * 60 // default 1h
-	if v := os.Getenv("JWT_EXP_MINUTES"); v != "" {
-		mins, err := strconv.Atoi(v)
-		if err != nil {
-			return Config{}, fmt.Errorf("invalid JWT_EXP_MINUTES: %w", err)
-		}
-		jwtExpiry = time.Duration(mins) * time.Minute
-	}
+	jwtExpMinutes := v.GetInt("JWT_EXP_MINUTES")
+	jwtExpiry := time.Duration(jwtExpMinutes) * time.Minute
 
 	var (
 		dbURL     string
@@ -88,18 +88,4 @@ func Load() (Config, error) {
 		JWTSecret: jwtSecret,
 		JWTExpiry: jwtExpiry,
 	}, nil
-}
-
-func getEnvAsBool(key string, defaultVal bool) bool {
-	valStr := os.Getenv(key)
-	if valStr == "" {
-		return defaultVal
-	}
-
-	val, err := strconv.ParseBool(valStr)
-	if err == nil {
-		return val
-	}
-
-	return defaultVal
 }
