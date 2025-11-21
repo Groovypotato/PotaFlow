@@ -1,0 +1,104 @@
+###################################
+# Go Build Artifacts
+###################################
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Build output
+/bin/
+/cmd/**/bin/
+/dist/
+
+# Go modules cache
+/pkg/mod/
+/vendor/
+
+# Compiled object files
+*.o
+*.a
+/.gocache
+/.tmp-gocache
+
+
+###################################
+# OS / Editor Junk
+###################################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Vim
+*.swp
+*.swo
+
+# VS Code
+.vscode/
+.history/
+
+###################################
+# Logs / Temp
+###################################
+*.log
+*.tmp
+*.cache
+tmp/
+logs/
+
+###################################
+# Environment Variables
+###################################
+.env
+.env.*
+!.env.example
+
+###################################
+# Docker
+###################################
+**/docker-cache/
+**/.docker/
+docker-data/
+db-data/
+
+###################################
+# Node / Frontend
+###################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+/ui/build/
+/ui/dist/
+/ui/.parcel-cache/
+/ui/.next/
+/ui/out/
+
+###################################
+# SQLC
+###################################
+# Uncomment if sqlc output should not be committed
+# /internal/database/sqlc/
+
+###################################
+# Misc
+###################################
+coverage/
+.idea/
+.project
+.settings
+*.iml
