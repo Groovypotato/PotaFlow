@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/groovypotato/PotaFlow/internal/database/sqlc"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -12,23 +13,24 @@ import (
 
 // Store implementation backed by Postgres.
 type StorePG struct {
-	db *pgxpool.Pool
+	db      *pgxpool.Pool
+	queries *sqlc.Queries
 }
 
 // NewStore returns a Store that uses the provided pool.
 func NewStore(db *pgxpool.Pool) *StorePG {
-	return &StorePG{db: db}
+	return &StorePG{
+		db:      db,
+		queries: sqlc.New(db),
+	}
 }
 
 func (s *StorePG) CreateUser(ctx context.Context, email, passwordHash string) (User, error) {
-	var u User
-	row := s.db.QueryRow(ctx, `
-		INSERT INTO users (email, password_hash)
-		VALUES ($1, $2)
-		RETURNING id::text, email, created_at, updated_at
-	`, email, passwordHash)
-
-	if err := row.Scan(&u.ID, &u.Email, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	row, err := s.queries.CreateUser(ctx, sqlc.CreateUserParams{
+		Email:        email,
+		PasswordHash: passwordHash,
+	})
+	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return User{}, ErrEmailExists
@@ -36,41 +38,47 @@ func (s *StorePG) CreateUser(ctx context.Context, email, passwordHash string) (U
 		return User{}, err
 	}
 
-	return u, nil
+	return User{
+		ID:        row.ID,
+		Email:     row.Email,
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
+	}, nil
 }
 
 func (s *StorePG) GetUserByEmail(ctx context.Context, email string) (UserWithHash, error) {
-	var u UserWithHash
-	row := s.db.QueryRow(ctx, `
-		SELECT id::text, email, password_hash, created_at, updated_at
-		FROM users
-		WHERE email = $1
-	`, email)
-
-	if err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	row, err := s.queries.GetUserByEmail(ctx, email)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return UserWithHash{}, ErrNotFound
 		}
 		return UserWithHash{}, err
 	}
 
-	return u, nil
+	return UserWithHash{
+		User: User{
+			ID:        row.ID,
+			Email:     row.Email,
+			CreatedAt: row.CreatedAt.Time,
+			UpdatedAt: row.UpdatedAt.Time,
+		},
+		PasswordHash: row.PasswordHash,
+	}, nil
 }
 
 func (s *StorePG) GetUserByID(ctx context.Context, id string) (User, error) {
-	var u User
-	row := s.db.QueryRow(ctx, `
-		SELECT id::text, email, created_at, updated_at
-		FROM users
-		WHERE id = $1
-	`, id)
-
-	if err := row.Scan(&u.ID, &u.Email, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	row, err := s.queries.GetUserByID(ctx, id)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, ErrNotFound
 		}
 		return User{}, err
 	}
 
-	return u, nil
+	return User{
+		ID:        row.ID,
+		Email:     row.Email,
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
+	}, nil
 }

@@ -21,6 +21,9 @@
 # Compiled object files
 *.o
 *.a
+/.gocache
+/.tmp-gocache
+
 
 ###################################
 # OS / Editor Junk
