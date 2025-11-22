@@ -124,6 +124,7 @@ func (s *Service) Create(ctx context.Context, userID, name string) (Workflow, er
 		Name:   name,
 	})
 	if err != nil {
+
 		return Workflow{}, err
 	}
 
