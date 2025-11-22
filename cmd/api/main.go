@@ -31,6 +31,7 @@ func main() {
 
 	if cfg.DEBUGMODE {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
 	} else {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
